@@ -24,57 +24,42 @@
 
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script>
-    let socket;
-    const map = L.map('map').setView([20, 0], 2);
-    const markers = {};
 
+  <script>
+    const map = L.map('map').setView([0, 0], 13); // Placeholder
+  
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      fetch('https://tracking-ibrm.onrender.com/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.token) {
-          initSocket(data.token);
-        } else {
-          alert('Login failed');
-        }
-      });
+  
+    let marker;
+  
+    function updateLocation(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+  
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+  
+      map.setView([lat, lng], 16); // Zoom to user
+      socket.emit('location', { lat, lng });
     }
-
-    function initSocket(token) {
-      socket = io("https://tracking-ibrm.onrender.com/", {
-        auth: { token }
+  
+    function handleLocationError(error) {
+      alert("Location access denied or unavailable.");
+    }
+  
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(updateLocation, handleLocationError, {
+        enableHighAccuracy: true
       });
-
-      // Send location every 5 seconds
-      setInterval(() => {
-        const latitude = 20 + Math.random() * 10;
-        const longitude = 70 + Math.random() * 10;
-        socket.emit("locationUpdate", { latitude, longitude });
-      }, 5000);
-
-      socket.on("locationUpdate", (data) => {
-        const { userId, latitude, longitude } = data;
-        if (markers[userId]) {
-          markers[userId].setLatLng([latitude, longitude]);
-        } else {
-          markers[userId] = L.marker([latitude, longitude])
-            .addTo(map)
-            .bindPopup(`User: ${userId}`);
-        }
-      });
+    } else {
+      alert("Geolocation is not supported by this browser.");
     }
   </script>
+  
 </body>
 </html>
