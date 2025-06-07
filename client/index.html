@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Real-time GPS Tracking</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    #map { height: 90vh; width: 100%; }
+    #login { margin: 10px; }
+  </style>
+</head>
+<body>
+  <div id="login">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    let socket;
+    const map = L.map('map').setView([20, 0], 2);
+    const markers = {};
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.token) {
+          initSocket(data.token);
+        } else {
+          alert('Login failed');
+        }
+      });
+    }
+
+    function initSocket(token) {
+      socket = io("http://localhost:3000", {
+        auth: { token }
+      });
+
+      // Send location every 5 seconds
+      setInterval(() => {
+        const latitude = 20 + Math.random() * 10;
+        const longitude = 70 + Math.random() * 10;
+        socket.emit("locationUpdate", { latitude, longitude });
+      }, 5000);
+
+      socket.on("locationUpdate", (data) => {
+        const { userId, latitude, longitude } = data;
+        if (markers[userId]) {
+          markers[userId].setLatLng([latitude, longitude]);
+        } else {
+          markers[userId] = L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup(`User: ${userId}`);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
