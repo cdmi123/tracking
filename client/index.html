@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Live GPS Tracker</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
@@ -10,29 +11,39 @@
       height: 100%;
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
+
     #map {
-      height: 100vh;
+      height: 100%;
       width: 100%;
+      touch-action: auto;
+    }
+
+    .leaflet-control-zoom {
+      font-size: 24px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-
   <script>
-    // Change this to your actual deployed server URL (on Render or other)
-    const SERVER_URL = "https://your-app-name.onrender.com"; // 👈 Update this!
+    const socket = io(); // Connect to same origin (Render server)
 
-    const socket = io(SERVER_URL);
-    const map = L.map('map').setView([0, 0], 13);
+    const map = L.map('map', {
+      touchZoom: true,
+      tap: true,
+      zoomControl: true,
+      dragging: true
+    }).setView([0, 0], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
     }).addTo(map);
 
     let marker;
@@ -68,9 +79,9 @@
       alert("Geolocation is not supported by this browser.");
     }
 
-    // (Optional) Receive other users' locations if implemented on server
+    // Optional: Listen to others' location updates
     socket.on('location', data => {
-      // Handle other users' markers here
+      // Future: add logic to display other users
     });
   </script>
 </body>
