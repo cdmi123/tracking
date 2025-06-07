@@ -37,7 +37,7 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      fetch('http://localhost:3000/auth/login', {
+      fetch('https://tracking-ibrm.onrender.com/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -53,7 +53,7 @@
     }
 
     function initSocket(token) {
-      socket = io("http://localhost:3000", {
+      socket = io("https://tracking-ibrm.onrender.com/", {
         auth: { token }
       });
 
